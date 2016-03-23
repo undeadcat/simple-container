@@ -25,7 +25,7 @@ namespace SimpleContainer.Implementation
 		private bool disposed;
 		private readonly List<ImplementationSelector> implementationSelectors;
 		internal ConfigurationRegistry Configuration { get; private set; }
-		internal readonly ContainerContext containerContext;
+		private readonly ContainerContext containerContext;
 		private readonly LogError errorLogger;
 
 		public SimpleContainer(ConfigurationRegistry configurationRegistry, ContainerContext containerContext,
@@ -64,10 +64,15 @@ namespace SimpleContainer.Implementation
 			else
 			{
 				var id = instanceCache.GetOrAdd(name, createId);
-				if (!id.TryGet(out result))
+				if (id.TryGet(out result)) 
+					return new ResolvedService(result, containerContext, isEnumerable);
+				var activation = ResolutionContext.Push(this);
+				try
 				{
-					var activation = ResolutionContext.Push(this);
 					result = ResolveCore(name, false, null, activation.activated);
+				}
+				finally
+				{
 					PopResolutionContext(activation, result, isEnumerable);
 				}
 			}
@@ -80,8 +85,7 @@ namespace SimpleContainer.Implementation
 			ResolutionContext.Pop(activation);
 			if (activation.previous == null)
 				return;
-			var resultDependency = containerService.AsDependency(containerContext, "() => " + containerService.Type.FormatName(),
-				isEnumerable);
+			var resultDependency = containerService.AsDependency(containerContext, "() => " + containerService.Type.FormatName(),isEnumerable);
 			if (activation.activated.Container != activation.previous.Container)
 				resultDependency.Comment = "container boundary";
 			activation.previous.TopBuilder.AddDependency(resultDependency, false);
@@ -103,16 +107,23 @@ namespace SimpleContainer.Implementation
 			if (arguments == null && factoryCache.TryGetValue(name, out compiledFactory) && !hasPendingResolutionContext)
 				return compiledFactory();
 			var activation = ResolutionContext.Push(this);
+			ContainerService result = null;
 			List<string> oldContracts = null;
-			if (hasPendingResolutionContext)
+			try
 			{
-				oldContracts = activation.activated.Contracts.Replace(name.Contracts);
-				name = new ServiceName(name.Type);
+				if (hasPendingResolutionContext)
+				{
+					oldContracts = activation.activated.Contracts.Replace(name.Contracts);
+					name = new ServiceName(name.Type);
+				}
+				result = ResolveCore(name, true, ObjectAccessor.Get(arguments), activation.activated);
 			}
-			var result = ResolveCore(name, true, ObjectAccessor.Get(arguments), activation.activated);
-			if (hasPendingResolutionContext)
-				activation.activated.Contracts.Restore(oldContracts);
-			PopResolutionContext(activation, result, isEnumerable);
+			finally
+			{
+				if (oldContracts != null)
+					activation.activated.Contracts.Restore(oldContracts);
+				PopResolutionContext(activation, result, isEnumerable);
+			}
 			if (!hasPendingResolutionContext)
 				result.EnsureInitialized(containerContext, result);
 			result.CheckStatusIsGood(containerContext);
