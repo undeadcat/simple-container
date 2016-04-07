@@ -472,8 +472,10 @@ namespace SimpleContainer.Implementation
 						SetComment(e.Message);
 					return;
 				}
-				catch (SimpleContainerException)
+				catch (SimpleContainerException e)
 				{
+					if (Status == ServiceStatus.Ok)
+						SetError(e);
 					return;
 				}
 				catch (Exception e)

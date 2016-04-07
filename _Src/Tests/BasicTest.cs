@@ -589,6 +589,41 @@ namespace SimpleContainer.Tests
 			}
 		}
 
+		public class SimpleContainerExceptionDuringConstruction_IncludeInResultingException : BasicTest
+		{
+			[Test]
+			public void Test()
+			{
+				var container = Container();
+				var exception = Assert.Throws<SimpleContainerException>(() => container.Get<Service>());
+				var messageText = exception.ToString();
+				Assert.That(messageText, Is.StringContaining("service [Service] construction exception\r\n\r\n!Service <---------------"));
+				Assert.That(messageText, Is.StringContaining("Configurator crash"));
+				Assert.That(messageText, Is.StringContaining("InvalidOperationException"));
+			}
+
+			public class InvalidConfigurator : IServiceConfigurator<Dependency>
+			{
+				public void Configure(ConfigurationContext context, ServiceConfigurationBuilder<Dependency> builder)
+				{
+					throw new InvalidOperationException("Configurator crash");
+				}
+			}
+
+			public class Dependency
+			{
+				
+			}
+
+			public class Service
+			{
+				public Service(IContainer container)
+				{
+					container.GetImplementationsOf<Dependency>();
+				}
+			}
+		}
+
 		public class CyclicDependency : BasicTest
 		{
 			[Test]
