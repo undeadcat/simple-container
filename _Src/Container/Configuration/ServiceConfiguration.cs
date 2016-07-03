@@ -184,14 +184,8 @@ namespace SimpleContainer.Configuration
 				GetDependencyBuilder(new DependencyKey(dependencyType)).UseFactory(creator);
 			}
 
-			public void BindDependency<T, TDependency>(object value)
+			public void BindDependency<TDependency>(TDependency value)
 			{
-				if (value != null && value is TDependency == false)
-					throw new SimpleContainerException(
-						string.Format("dependency {0} for service [{1}] can't be casted to required type [{2}]",
-							DumpValue(value),
-							typeof (T).FormatName(),
-							typeof (TDependency).FormatName()));
 				GetDependencyBuilder(new DependencyKey(typeof (TDependency))).UseValue(value);
 			}
 

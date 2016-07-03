@@ -64,57 +64,5 @@ namespace SimpleContainer.Tests
 				Assert.That(exception.Message, Is.EqualTo("can't bind value for generic definition [A<T>]"));
 			}
 		}
-
-		public class BindInvalidParameterValueOfSimpleType : BasicTest
-		{
-			[Test]
-			public void Test()
-			{
-				var error = Assert.Throws<SimpleContainerException>(() => Container(x => x.BindDependency<Wrap, A>(42)));
-				Assert.That(error.Message,
-					Is.StringContaining("dependency [42] of type [int] for service [Wrap] can't be casted to required type [A]"));
-			}
-
-			public class A
-			{
-			}
-
-			public class B
-			{
-			}
-
-			public class Wrap
-			{
-				public Wrap(A a)
-				{
-				}
-			}
-		}
-
-		public class BindInvalidParameterValue : BasicTest
-		{
-			[Test]
-			public void Test()
-			{
-				var error = Assert.Throws<SimpleContainerException>(() => Container(x => x.BindDependency<Wrap, A>(new B())));
-				Assert.That(error.Message,
-					Is.StringContaining("dependency of type [B] for service [Wrap] can't be casted to required type [A]"));
-			}
-
-			public class A
-			{
-			}
-
-			public class B
-			{
-			}
-
-			public class Wrap
-			{
-				public Wrap(A a)
-				{
-				}
-			}
-		}
 	}
 }

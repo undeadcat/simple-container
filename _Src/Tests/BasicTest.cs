@@ -1517,7 +1517,7 @@ namespace SimpleContainer.Tests
 			[Test]
 			public void Test()
 			{
-				var container = Container(b => b.Bind<B>((object) null));
+				var container = Container(b => b.Bind((B) null));
 				var instance = container.Get<A>();
 				Assert.That(instance.b, Is.Null);
 			}

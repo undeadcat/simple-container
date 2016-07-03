@@ -38,7 +38,7 @@ namespace SimpleContainer.Configuration
 			return Self;
 		}
 
-		public TSelf Bind<T>(object value, bool containerOwnsInstance = true)
+		public TSelf Bind<T>(T value, bool containerOwnsInstance = true)
 		{
 			GetServiceBuilder(typeof (T)).Bind(typeof (T), value, containerOwnsInstance);
 			return Self;
@@ -106,13 +106,7 @@ namespace SimpleContainer.Configuration
 
 		public TSelf BindDependency<T, TDependency>(TDependency value)
 		{
-			GetServiceBuilder(typeof (T)).BindDependency<T, TDependency>(value);
-			return Self;
-		}
-
-		public TSelf BindDependency<T, TDependency>(object value)
-		{
-			GetServiceBuilder(typeof (T)).BindDependency<T, TDependency>(value);
+			GetServiceBuilder(typeof (T)).BindDependency(value);
 			return Self;
 		}
 
@@ -135,9 +129,9 @@ namespace SimpleContainer.Configuration
 			return Self;
 		}
 
-		public TSelf BindDependencyImplementation<T, TDependencyValue>(string dependencyName)
+		public TSelf BindDependencyImplementation<T, TDependencyImplementation>(string dependencyName)
 		{
-			GetServiceBuilder(typeof (T)).BindDependencyImplementation<TDependencyValue>(dependencyName);
+			GetServiceBuilder(typeof (T)).BindDependencyImplementation<TDependencyImplementation>(dependencyName);
 			return Self;
 		}
 
