@@ -12,7 +12,7 @@ namespace SimpleContainer.Tests
 			[Test]
 			public void Test()
 			{
-				const string message =
+				var message =
 					"no instances for [OuterOuterService] because [IInterface] has no instances\r\n\r\n!OuterOuterService\r\n\t!OuterService\r\n\t\t!IInterface - has no implementations" + defaultScannedAssemblies;
 				var container = Container();
 				var error = Assert.Throws<SimpleContainerException>(() => container.Get<OuterOuterService>());

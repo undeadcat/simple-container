@@ -1,9 +1,8 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using SimpleContainer.Configuration;
 using SimpleContainer.Helpers;
 using SimpleContainer.Implementation;
@@ -16,10 +15,10 @@ namespace SimpleContainer
 		private Type profile;
 		private Func<AssemblyName, bool> assembliesFilter = n => true;
 		private Func<Type, string, object> settingsLoader;
-		private string configFileName;
 		private LogError errorLogger;
 		private LogInfo infoLogger;
 		private Type[] priorities;
+		private Func<Type[], Action<ContainerConfigurationBuilder>> fileConfigure;
 		private Action<ContainerConfigurationBuilder> configure;
 		private Action<ContainerConfigurationBuilder> staticConfigure;
 		private TypesContext typesContextCache;
@@ -32,7 +31,7 @@ namespace SimpleContainer
 
 		public ContainerFactory WithSettingsLoader(Func<Type, object> newLoader)
 		{
-			var cache = new ConcurrentDictionary<Type, object>();
+			var cache = Caches.Create<Type, object>();
 			settingsLoader = (t, _) => cache.GetOrAdd(t, newLoader);
 			configurationByProfileCache.Clear();
 			return this;
@@ -40,7 +39,7 @@ namespace SimpleContainer
 
 		public ContainerFactory WithSettingsLoader(Func<Type, string, object> newLoader)
 		{
-			var cache = new ConcurrentDictionary<string, object>();
+			var cache = Caches.Create<string, object>();
 			settingsLoader = (t, k) => cache.GetOrAdd(t.Name + k, s => newLoader(t, k));
 			configurationByProfileCache.Clear();
 			return this;
@@ -63,7 +62,7 @@ namespace SimpleContainer
 
 		public ContainerFactory WithAssembliesFilter(Func<AssemblyName, bool> newAssembliesFilter)
 		{
-			assembliesFilter = n => newAssembliesFilter(n) || n.Name == "SimpleContainer";
+			assembliesFilter = n => newAssembliesFilter(n) || n.Name == typeof(IContainer).GetTypeInfo().Assembly.GetName().Name;
 			typesContextCache = null;
 			configurationByProfileCache.Clear();
 			return this;
@@ -76,9 +75,9 @@ namespace SimpleContainer
 			return this;
 		}
 
-		public ContainerFactory WithConfigFile(string fileName)
+		internal ContainerFactory WithFileConfiguration(Func<Type[], Action<ContainerConfigurationBuilder>> fileConfig)
 		{
-			configFileName = fileName;
+			fileConfigure = fileConfig;
 			typesContextCache = null;
 			configurationByProfileCache.Clear();
 			return this;
@@ -123,36 +122,29 @@ namespace SimpleContainer
 			return this;
 		}
 
-		public ContainerFactory WithTypesFromDefaultBinDirectory(bool withExecutables)
-		{
-			return WithTypesFromDirectory(GetBinDirectory(), withExecutables);
-		}
-
-		public ContainerFactory WithTypesFromDirectory(string directory, bool withExecutables)
-		{
-			var assemblies = Directory.GetFiles(directory, "*.dll")
-				.Union(withExecutables ? Directory.GetFiles(directory, "*.exe") : Enumerable.Empty<string>())
-				.Select(delegate(string s)
-				{
-					try
-					{
-						return AssemblyName.GetAssemblyName(s);
-					}
-					catch (BadImageFormatException)
-					{
-						return null;
-					}
-				})
-				.NotNull()
-				.Where(assembliesFilter)
-				.AsParallel()
-				.Select(AssemblyHelpers.LoadAssembly);
-			return WithTypesFromAssemblies(assemblies);
-		}
-
 		public ContainerFactory WithTypesFromAssemblies(IEnumerable<Assembly> assemblies)
 		{
-			return WithTypesFromAssemblies(assemblies.AsParallel());
+			var tasks = assemblies
+				.Where(x => assembliesFilter(x.GetName()))
+				.Select(a =>
+				{
+					return Task.Run(() =>
+					{
+						try
+						{
+							return a.GetTypes();
+						}
+						catch (ReflectionTypeLoadException e)
+						{
+							const string messageFormat = "can't load types from assembly [{0}], loaderExceptions:\r\n{1}";
+							var loaderExceptionsText = e.LoaderExceptions.Select(ex => ex.ToString()).JoinStrings("\r\n");
+							throw new SimpleContainerException(string.Format(messageFormat, a.GetName(), loaderExceptionsText), e);
+						}
+					});
+				});
+			types = () => Task.WhenAll(tasks).Result.SelectMany(x => x).ToArray();
+			typesContextCache = null;
+			return this;
 		}
 
 		public ContainerFactory WithTypes(Type[] newTypes)
@@ -169,14 +161,14 @@ namespace SimpleContainer
 			if (typesContext == null)
 			{
 				var targetTypes = types()
-					.Concat(Assembly.GetExecutingAssembly().GetTypes())
+					.Concat(typeof(ContainerFactory).GetTypeInfo().Assembly.GetTypes())
 					.Where(x => !x.Name.StartsWith("<>", StringComparison.OrdinalIgnoreCase))
 					.Distinct()
 					.ToArray();
 				typesContext = new TypesContext {typesList = TypesList.Create(targetTypes)};
 				typesContext.genericsAutoCloser = new GenericsAutoCloser(typesContext.typesList, assembliesFilter);
-				if (configFileName != null && File.Exists(configFileName))
-					typesContext.fileConfigurator = FileConfigurationParser.Parse(typesContext.typesList.Types, configFileName);
+				if (fileConfigure != null)
+					typesContext.fileConfigurator = fileConfigure(typesContext.typesList.Types);
 				ConfigurationRegistry staticConfiguration;
 				if (staticConfigure == null)
 					staticConfiguration = ConfigurationRegistry.Empty;
@@ -213,37 +205,6 @@ namespace SimpleContainer
 				typesList = currentTypesContext.typesList,
 				valueFormatters = valueFormatters
 			}, errorLogger);
-		}
-
-		private static string GetBinDirectory()
-		{
-			var relativePath = AppDomain.CurrentDomain.RelativeSearchPath;
-			var basePath = AppDomain.CurrentDomain.BaseDirectory;
-			return string.IsNullOrEmpty(relativePath) || !relativePath.IsSubdirectoryOf(basePath)
-				? basePath
-				: relativePath;
-		}
-
-		private ContainerFactory WithTypesFromAssemblies(ParallelQuery<Assembly> assemblies)
-		{
-			var newTypes = assemblies
-				.Where(x => assembliesFilter(x.GetName()))
-				.SelectMany(a =>
-				{
-					try
-					{
-						return a.GetTypes();
-					}
-					catch (ReflectionTypeLoadException e)
-					{
-						const string messageFormat = "can't load types from assembly [{0}], loaderExceptions:\r\n{1}";
-						var loaderExceptionsText = e.LoaderExceptions.Select(ex => ex.ToString()).JoinStrings("\r\n");
-						throw new SimpleContainerException(string.Format(messageFormat, a.GetName(), loaderExceptionsText), e);
-					}
-				});
-			types = newTypes.ToArray;
-			typesContextCache = null;
-			return this;
 		}
 
 		private class TypesContext

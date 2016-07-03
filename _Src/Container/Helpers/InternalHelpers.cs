@@ -30,9 +30,28 @@ namespace SimpleContainer.Helpers
 			return new T().ContractName;
 		}
 
-		public static string[] ParseContracts(ICustomAttributeProvider provider)
+		public static string[] ParseContracts(MemberInfo provider)
 		{
-			var attributes = provider.GetCustomAttributes<RequireContractAttribute>();
+			return ParseContracts(provider.GetCustomAttributes<RequireContractAttribute>());
+		}
+
+		public static string[] ParseContracts(ParameterInfo provider)
+		{
+			return ParseContracts(provider.GetCustomAttributes<RequireContractAttribute>());
+		}
+
+		public static string[] ParseContracts(MethodBase provider)
+		{
+			return ParseContracts(provider.GetCustomAttributes<RequireContractAttribute>());
+		}
+
+		public static string[] ParseContracts(Type provider)
+		{
+			return ParseContracts(provider.GetCustomAttributes<RequireContractAttribute>());
+		}
+
+		public static string[] ParseContracts(RequireContractAttribute[] attributes)
+		{
 			if (attributes.Length == 0)
 				return emptyStrings;
 			if (attributes.Length > 1)
@@ -78,6 +97,7 @@ namespace SimpleContainer.Helpers
 		public static readonly string[] emptyStrings = new string[0];
 		public static readonly List<Type> emptyTypesList = new List<Type>(0);
 		public static readonly ServiceName[] emptyServiceNames = new ServiceName[0];
+		public static Type[] emptyTypes = new Type[0];
 
 		public static string DumpValue(object value)
 		{

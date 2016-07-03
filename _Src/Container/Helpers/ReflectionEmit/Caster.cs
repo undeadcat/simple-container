@@ -24,7 +24,7 @@ namespace SimpleContainer.Helpers.ReflectionEmit
 				return;
 
 			if (!outputType.IsAssignableFrom(memberType))
-				throw new TypeMismatchException(outputType, memberType);
+				throw new InvalidOperationException(string.Format("types [{0}] and [{1}] are not compatibe", outputType, memberType));
 
 			if (memberType.IsValueType && !outputType.IsValueType)
 				EmitValueTypeCast(ilGenerator);

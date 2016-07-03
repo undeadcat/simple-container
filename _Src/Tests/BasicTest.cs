@@ -315,7 +315,7 @@ namespace SimpleContainer.Tests
 				var error = Assert.Throws<SimpleContainerException>(() => container.Get<ServiceA>());
 				Assert.That(error.Message,
 					Is.StringContaining(
-						"can't find resource [inexistent.txt] in namespace of [SimpleContainer.Tests.BasicTest+CanInjectResource+ServiceWithInexistentResource], assembly [SimpleContainer.Tests]\r\n\r\n!ServiceA\r\n\t!ServiceWithInexistentResource"));
+						string.Format("can't find resource [inexistent.txt] in namespace of [SimpleContainer.Tests.BasicTest+CanInjectResource+ServiceWithInexistentResource], assembly [{0}]\r\n\r\n!ServiceA\r\n\t!ServiceWithInexistentResource", TestsAsembly)));
 			}
 
 			public class ServiceA
@@ -1374,7 +1374,7 @@ namespace SimpleContainer.Tests
 				var error = Assert.Throws<SimpleContainerException>(() => container.Get<OuterService>());
 				Assert.That(error.Message, Is.EqualTo(message));
 
-				const string message2 = "no instances for [Child2] because [IOtherService] has no instances\r\n\r\n!Child2\r\n\t!IOtherService - has no implementations" + defaultScannedAssemblies;
+				string message2 = "no instances for [Child2] because [IOtherService] has no instances\r\n\r\n!Child2\r\n\t!IOtherService - has no implementations" + defaultScannedAssemblies;
 				error = Assert.Throws<SimpleContainerException>(() => container.Get<Child2>());
 				Assert.That(error.Message, Is.EqualTo(message2));
 			}

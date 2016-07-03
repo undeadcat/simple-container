@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{833CBDD3-77C6-4FB9-A9B0-BDD3061828A0}</ProjectGuid>
+    <ProjectGuid>{3554301B-280A-4E3D-AEF6-A1A7112CAEC6}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>SimpleContainer.Tests</RootNamespace>
-    <AssemblyName>SimpleContainer.Tests</AssemblyName>
+    <AssemblyName>SimpleContainer.Tests.Portable</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
@@ -61,7 +61,6 @@
     <Compile Include="Factories\FactoriesArgumentsHandlingTest.cs" />
     <Compile Include="Factories\FactoriesExceptionsHandlingTest.cs" />
     <Compile Include="Factories\FactoriesGenericHandlingTest.cs" />
-    <Compile Include="FileConfigurationTest.cs" />
     <Compile Include="Generics\GenericClassImplementingGenericIntefaceWithDifferentArguments.cs" />
     <Compile Include="Generics\CanCloseSingleGenericInterfaceWithMultipleParameters.cs" />
     <Compile Include="Generics\CanNotCreateGenericWithMultipleImplementationsOfDependency.cs" />
@@ -109,9 +108,9 @@
     <EmbeddedResource Include="ConstructionLog\test-resource-for-construction-log-test.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Container\Container.csproj">
-      <Project>{8eb9cdb1-206d-4769-a113-a019c7460590}</Project>
-      <Name>Container</Name>
+    <ProjectReference Include="..\Container\Container.Portable.csproj">
+      <Project>{3ee329f2-1ec2-4218-bbc7-00bc27915353}</Project>
+      <Name>Container.Portable</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

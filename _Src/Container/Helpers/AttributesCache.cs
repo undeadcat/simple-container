@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Reflection;
 
 namespace SimpleContainer.Helpers
@@ -7,7 +6,7 @@ namespace SimpleContainer.Helpers
 	internal class AttributesCache
 	{
 		public static readonly AttributesCache instance = new AttributesCache();
-		private readonly ConcurrentDictionary<Key, object> cache = new ConcurrentDictionary<Key, object>();
+		private readonly IConcurrentCache<Key, object> cache = Caches.Create<Key, object>();
 
 		public AttributesCache()
 		{
@@ -18,21 +17,41 @@ namespace SimpleContainer.Helpers
 
 		private static object CreateCustomAttributes(Key key)
 		{
-			return key.attributeProvider.GetCustomAttributes(key.attributeType, key.inherit);
+			var type = key.attributeProvider as Type;
+			if (type != null)
+				return type.GetTypeInfo().GetCustomAttributes(key.attributeType, key.inherit);
+			var methodBase = key.attributeProvider as MethodBase;
+			if (methodBase != null)
+				return methodBase.GetCustomAttributes(key.attributeType, key.inherit);
+			var memberInfo = key.attributeProvider as MemberInfo;
+			if (memberInfo != null)
+				return memberInfo.GetCustomAttributes(key.attributeType, key.inherit);
+
+			var parameterInfo = key.attributeProvider as ParameterInfo;
+			if (parameterInfo != null)
+				return parameterInfo.GetCustomAttributes(key.attributeType, key.inherit);
+
+			var assembly = key.attributeProvider as Assembly;
+			if (assembly != null)
+				return assembly.GetCustomAttributes(key.attributeType);
+			var module = key.attributeProvider as Module;
+			if (module != null)
+				return module.GetCustomAttributes(key.attributeType);
+			throw new InvalidOperationException(string.Format("Could not get custom attributes from type {0}", key.attributeProvider.GetType()));
 		}
 
-		public object GetCustomAttributes(ICustomAttributeProvider attributeProvider, Type attributeType, bool inherit)
+		public object GetCustomAttributes(object attributeProvider, Type attributeType, bool inherit)
 		{
 			return cache.GetOrAdd(new Key(attributeProvider, attributeType, inherit), createDelegate);
 		}
 
 		private struct Key : IEquatable<Key>
 		{
-			public readonly ICustomAttributeProvider attributeProvider;
+			public readonly object attributeProvider;
 			public readonly Type attributeType;
 			public readonly bool inherit;
 
-			public Key(ICustomAttributeProvider attributeProvider, Type attributeType, bool inherit)
+			public Key(object attributeProvider, Type attributeType, bool inherit)
 			{
 				this.attributeProvider = attributeProvider;
 				this.attributeType = attributeType;

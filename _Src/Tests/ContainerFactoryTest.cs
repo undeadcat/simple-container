@@ -4,7 +4,7 @@ using SimpleContainer.Tests.Helpers;
 
 namespace SimpleContainer.Tests
 {
-	public abstract class ContainerFactoryTest : UnitTestBase
+	public abstract class ContainerFactoryTest : SimpleContainerTestBase
 	{
 		public class CanSkipAssemblyFilter : ContainerFactoryTest
 		{
@@ -15,8 +15,7 @@ namespace SimpleContainer.Tests
 			[Test]
 			public void Test()
 			{
-				var container = new ContainerFactory()
-					.WithTypesFromDefaultBinDirectory(false)
+				var container = Factory()
 					.WithSettingsLoader(Activator.CreateInstance)
 					.Build();
 				Assert.That(container.Get<A>(), Is.Not.Null);
@@ -38,8 +37,7 @@ namespace SimpleContainer.Tests
 			[Test]
 			public void Test()
 			{
-				var f = new ContainerFactory()
-					.WithTypesFromDefaultBinDirectory(false)
+				var f = Factory()
 					.WithSettingsLoader(Activator.CreateInstance);
 				using (var c1 = f.WithConfigurator(b => b.BindDependency<A>("parameter", 1)).Build())
 					Assert.That(c1.Get<A>().parameter, Is.EqualTo(1));

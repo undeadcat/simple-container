@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using SimpleContainer.Annotations;
@@ -14,19 +13,19 @@ namespace SimpleContainer.Implementation
 			.GetMethods(BindingFlags.Static | BindingFlags.Public)
 			.ToLookup(x => x.ReturnType.GetGenericTypeDefinition());
 
-		private static readonly ConcurrentDictionary<SignatureDelegateKey, Delegate> casters =
-			new ConcurrentDictionary<SignatureDelegateKey, Delegate>();
+		private static readonly IConcurrentCache<SignatureDelegateKey, Delegate> casters =
+			Caches.Create<SignatureDelegateKey, Delegate>();
 
 		private static readonly Func<SignatureDelegateKey, Delegate> createCaster = delegate(SignatureDelegateKey key)
 		{
 			var delegateType = typeof (Func<Func<Type, object, object>, object>);
-			return Delegate.CreateDelegate(delegateType, key.signature.MakeGenericMethod(key.resultType));
+			return key.signature.MakeGenericMethod(key.resultType).CreateDelegate(delegateType);
 		};
 
 		public static object TryCreate(ContainerService.Builder builder)
 		{
 			var funcType = builder.Type;
-			if (!funcType.IsGenericType || !funcType.IsDelegate())
+			if (!funcType.GetTypeInfo().IsGenericType || !funcType.IsDelegate())
 				return null;
 			Type resultType;
 			var signature = FindSignature(funcType, out resultType);

@@ -1,8 +1,8 @@
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 using System.Text;
 using SimpleContainer.Configuration;
+using BindingFlags = System.Reflection.BindingFlags;
 
 namespace SimpleContainer.Tests.Helpers
 {
@@ -10,8 +10,9 @@ namespace SimpleContainer.Tests.Helpers
 	{
 		protected List<IDisposable> disposables;
 
-		protected const string defaultScannedAssemblies =
-			"\r\nscanned assemblies\r\n\tSimpleContainer\r\n\tSimpleContainer.Tests";
+		protected static string ContainerAsembly = typeof(IContainer).Assembly.GetName().Name;
+		protected static string TestsAsembly = typeof(SimpleContainerTestBase).Assembly.GetName().Name;
+		protected static string defaultScannedAssemblies = string.Format("\r\nscanned assemblies\r\n\t{0}\r\n\t{1}", ContainerAsembly, TestsAsembly);
 
 		protected override void SetUp()
 		{
@@ -34,7 +35,7 @@ namespace SimpleContainer.Tests.Helpers
 		{
 			var targetTypes = GetType().GetNestedTypesRecursive(BindingFlags.NonPublic | BindingFlags.Public);
 			return new ContainerFactory()
-				.WithAssembliesFilter(x => x.Name.StartsWith("SimpleContainer"))
+				.WithAssembliesFilter(x => x.Name == ContainerAsembly || x.Name == TestsAsembly)
 				.WithTypes(targetTypes);
 		}
 

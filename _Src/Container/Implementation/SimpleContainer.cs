@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,11 +14,11 @@ namespace SimpleContainer.Implementation
 	{
 		private readonly Func<ServiceName, ContainerServiceId> createId = _ => new ContainerServiceId();
 
-		private readonly ConcurrentDictionary<ServiceName, ContainerServiceId> instanceCache =
-			new ConcurrentDictionary<ServiceName, ContainerServiceId>();
+		private readonly IConcurrentCache<ServiceName, ContainerServiceId> instanceCache =
+			Caches.Create<ServiceName, ContainerServiceId>();
 
-		private readonly ConcurrentDictionary<ServiceName, Func<object>> factoryCache =
-			new ConcurrentDictionary<ServiceName, Func<object>>();
+		private readonly IConcurrentCache<ServiceName, Func<object>> factoryCache =
+			Caches.Create<ServiceName, Func<object>>();
 
 		private readonly DependenciesInjector dependenciesInjector;
 		private bool disposed;
@@ -146,7 +145,7 @@ namespace SimpleContainer.Implementation
 		private ServiceConfiguration GetConfigurationOrNull(Type type, ContractsList contracts)
 		{
 			var result = Configuration.GetConfigurationOrNull(type, contracts);
-			if (result == null && type.IsGenericType)
+			if (result == null && type.GetTypeInfo().IsGenericType)
 				result = Configuration.GetConfigurationOrNull(type.GetDefinition(), contracts);
 			return result;
 		}
@@ -231,8 +230,8 @@ namespace SimpleContainer.Implementation
 			{
 				var message = string.Format("cyclic dependency for service [{0}], stack\r\n{1}",
 					declaredName.Type.FormatName(), context.FormatStack() + "\r\n\t" + declaredName);
-                context.Contracts.RemoveLast(pushedContracts.pushedContractsCount);
-                return ContainerService.Error(declaredName, message);
+				context.Contracts.RemoveLast(pushedContracts.pushedContractsCount);
+				return ContainerService.Error(declaredName, message);
 			}
 			if (!pushedContracts.isOk)
 			{
@@ -321,20 +320,24 @@ namespace SimpleContainer.Implementation
 				if (!builder.Context.AnalizeDependenciesOnly)
 					builder.CreateInstanceBy(CallTarget.F(builder.Configuration.Factory), builder.Configuration.ContainerOwnsInstance);
 			}
-			else if (builder.Type.IsValueType)
-				builder.SetError("can't create value type");
-			else if (builder.Type.IsGenericType && builder.Type.ContainsGenericParameters)
-				builder.SetError("can't create open generic");
-			else if (!builder.CreateNew && builder.Type.TryGetCustomAttribute(out lifestyle) &&
-			         lifestyle.Lifestyle == Lifestyle.PerRequest)
-			{
-				const string messageFormat = "service [{0}] with PerRequest lifestyle can't be resolved, use Func<{0}> instead";
-				builder.SetError(string.Format(messageFormat, builder.Type.FormatName()));
-			}
-			else if (builder.Type.IsAbstract)
-				InstantiateInterface(builder);
 			else
-				InstantiateImplementation(builder);
+			{
+				var typeInfo = builder.Type.GetTypeInfo();
+				if (typeInfo.IsValueType)
+					builder.SetError("can't create value type");
+				else if (typeInfo.IsGenericType && typeInfo.ContainsGenericParameters)
+					builder.SetError("can't create open generic");
+				else if (!builder.CreateNew && builder.Type.TryGetCustomAttribute(out lifestyle) &&
+				         lifestyle.Lifestyle == Lifestyle.PerRequest)
+				{
+					const string messageFormat = "service [{0}] with PerRequest lifestyle can't be resolved, use Func<{0}> instead";
+					builder.SetError(string.Format(messageFormat, builder.Type.FormatName()));
+				}
+				else if (typeInfo.IsAbstract)
+					InstantiateInterface(builder);
+				else
+					InstantiateImplementation(builder);
+			}
 		}
 
 		private void ApplySelectors(HashSet<ImplementationType> implementations, ContainerService.Builder builder)
@@ -361,17 +364,17 @@ namespace SimpleContainer.Implementation
 
 		private void InstantiateInterface(ContainerService.Builder builder)
 		{
-		    HashSet<ImplementationType> implementationTypes;
-		    try
-		    {
-		        implementationTypes = GetImplementationTypes(builder);
-		    }
-		    catch (Exception e)
-		    {
-		        builder.SetError(e);
-		        return;
-		    }
-		    ApplySelectors(implementationTypes, builder);
+			HashSet<ImplementationType> implementationTypes;
+			try
+			{
+				implementationTypes = GetImplementationTypes(builder);
+			}
+			catch (Exception e)
+			{
+				builder.SetError(e);
+				return;
+			}
+			ApplySelectors(implementationTypes, builder);
 			if (implementationTypes.Count == 0)
 			{
 				builder.SetComment("has no implementations");
@@ -427,12 +430,12 @@ namespace SimpleContainer.Implementation
 							accepted = false
 						});
 				}
-				if (!implType.IsGenericType)
+				if (!implType.GetTypeInfo().IsGenericType)
 				{
-					if (!builder.Type.IsGenericType || builder.Type.IsAssignableFrom(implType))
+					if (!builder.Type.GetTypeInfo().IsGenericType || builder.Type.IsAssignableFrom(implType))
 						result.Add(ImplementationType.Accepted(implType));
 				}
-				else if (!implType.ContainsGenericParameters)
+				else if (!implType.GetTypeInfo().ContainsGenericParameters)
 					result.Add(ImplementationType.Accepted(implType));
 				else
 				{
@@ -440,7 +443,7 @@ namespace SimpleContainer.Implementation
 					foreach (var type in mapped)
 						if (builder.Type.IsAssignableFrom(type))
 							result.Add(ImplementationType.Accepted(type));
-					if (builder.Type.IsGenericType)
+					if (builder.Type.GetTypeInfo().IsGenericType)
 					{
 						var implInterfaces = implType.ImplementationsOf(builder.Type.GetGenericTypeDefinition());
 						foreach (var implInterface in implInterfaces)
@@ -457,7 +460,7 @@ namespace SimpleContainer.Implementation
 						continue;
 					foreach (var formalParameter in serviceConstructor.value.GetParameters())
 					{
-						if (!formalParameter.ParameterType.ContainsGenericParameters)
+						if (!formalParameter.ParameterType.GetTypeInfo().ContainsGenericParameters)
 							continue;
 						ValueWithType parameterValue;
 						if (!builder.Arguments.TryGet(formalParameter.Name, out parameterValue))
@@ -483,7 +486,7 @@ namespace SimpleContainer.Implementation
 			EnsureNotDisposed();
 			if (type.IsDelegate())
 				return Enumerable.Empty<Type>();
-			if (!type.IsAbstract)
+			if (!type.GetTypeInfo().IsAbstract)
 			{
 				var result = dependenciesInjector.GetDependencies(type)
 					.Select(ReflectionHelpers.UnwrapEnumerable)
@@ -660,11 +663,11 @@ namespace SimpleContainer.Implementation
 			FromResourceAttribute resourceAttribute;
 			if (implementationType == typeof (Stream) && formalParameter.TryGetCustomAttribute(out resourceAttribute))
 			{
-				var resourceStream = builder.Type.Assembly.GetManifestResourceStream(builder.Type, resourceAttribute.Name);
+				var resourceStream = builder.Type.GetTypeInfo().Assembly.GetManifestResourceStream(builder.Type, resourceAttribute.Name);
 				if (resourceStream == null)
 					return containerContext.Error(null, formalParameter.Name,
 						"can't find resource [{0}] in namespace of [{1}], assembly [{2}]",
-						resourceAttribute.Name, builder.Type, builder.Type.Assembly.GetName().Name);
+						resourceAttribute.Name, builder.Type, builder.Type.GetTypeInfo().Assembly.GetName().Name);
 				return containerContext.Resource(formalParameter, resourceAttribute.Name, resourceStream);
 			}
 			var dependencyName = ServiceName.Parse(implementationType.UnwrapEnumerable(),

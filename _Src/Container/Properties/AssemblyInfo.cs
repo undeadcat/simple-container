@@ -21,10 +21,6 @@ using System.Runtime.InteropServices;
 
 [assembly: ComVisible(false)]
 
-// The following GUID is for the ID of the typelib if this project is exposed to COM
-
-[assembly: Guid("670af509-6dff-4f94-b0dd-260bad3b140b")]
-
 // Version information for an assembly consists of the following four values:
 //
 //      Major Version
@@ -39,3 +35,4 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyVersion("1.0.0.0")]
 [assembly: AssemblyFileVersion("1.0.0.0")]
 [assembly: InternalsVisibleTo("SimpleContainer.Tests")]
+[assembly: InternalsVisibleTo("SimpleContainer.Tests.Portable")]

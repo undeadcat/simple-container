@@ -1,7 +1,7 @@
 using System;
 using System.Reflection.Emit;
 
-namespace SimpleContainer.Helpers
+namespace SimpleContainer.Helpers.ReflectionEmit
 {
 	internal static class EmitHelpers
 	{

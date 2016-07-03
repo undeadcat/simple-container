@@ -35,7 +35,7 @@ namespace SimpleContainer.Helpers
 		public static bool SafeTrySingle<T>(this IEnumerable<T> source, out T result)
 		{
 			var slice = source.Take(2).ToArray();
-			if (slice.Count() == 1)
+			if (slice.Length == 1)
 			{
 				result = slice.Single();
 				return true;

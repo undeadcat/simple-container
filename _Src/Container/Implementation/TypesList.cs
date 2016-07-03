@@ -25,7 +25,7 @@ namespace SimpleContainer.Implementation
 
 		public IEnumerable<Assembly> GetAssemblies()
 		{
-			return Types.Select(x => x.Assembly).Distinct().ToArray();
+			return Types.Select(x => x.GetTypeInfo().Assembly).Distinct().ToArray();
 		}
 
 		public static TypesList Create(Type[] types)
@@ -33,9 +33,10 @@ namespace SimpleContainer.Implementation
 			var result = new Dictionary<Type, List<Type>>();
 			foreach (var type in types)
 			{
-				if (type.IsAbstract)
+				var typeInfo = type.GetTypeInfo();
+				if (typeInfo.IsAbstract)
 					continue;
-				if (type.IsNestedPrivate)
+				if (typeInfo.IsNestedPrivate)
 					continue;
 				var t = type.GetDefinition();
 				foreach (var interfaceType in t.GetInterfaces())
@@ -44,7 +45,7 @@ namespace SimpleContainer.Implementation
 				while (current != null && current != typeof (object))
 				{
 					Include(result, current.GetDefinition(), t);
-					current = current.BaseType;
+					current = current.GetTypeInfo().BaseType;
 				}
 			}
 			return new TypesList(types, result);

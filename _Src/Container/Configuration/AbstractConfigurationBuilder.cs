@@ -128,6 +128,12 @@ namespace SimpleContainer.Configuration
 			GetServiceBuilder(type).BindDependency(dependencyType, creator);
 			return Self;
 		}
+		
+		public TSelf BindDependencyFactory<T, TDependency>(Func<IContainer, TDependency> creator)
+		{
+			GetServiceBuilder(typeof(T)).BindDependencyFactory(creator);
+			return Self;
+		}
 
 		public TSelf BindDependencyFactory<T>(string dependencyName, Func<IContainer, object> creator)
 		{

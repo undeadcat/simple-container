@@ -17,7 +17,7 @@
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
+    <DefineConstants>TRACE;DEBUG;FULLFRAMEWORK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -25,7 +25,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
+    <DefineConstants>TRACE;FULLFRAMEWORK</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
@@ -47,7 +47,20 @@
     <Compile Include="Configuration\ServiceConfigurationSet.cs" />
     <Compile Include="Configuration\ConfigurationRegistry.cs" />
     <Compile Include="Configuration\ServiceConfiguration.cs" />
-    <Compile Include="Helpers\EmitHelpers.cs" />
+    <Compile Include="FullFramework\ContainerFactoryExtensions.cs" />
+    <Compile Include="Helpers\Caches.cs" />
+    <Compile Include="Helpers\CompiledMethods.cs" />
+    <Compile Include="Helpers\ConcurrentDictionaryCache.cs" />
+    <Compile Include="Helpers\ICompiledMethodFactory.cs" />
+    <Compile Include="Helpers\IConcurrentCache.cs" />
+    <Compile Include="Helpers\ICtorFactory.cs" />
+    <Compile Include="Helpers\ReflectionEmit\ReflectionCompiledMethodFactory.cs" />
+    <Compile Include="Helpers\ReflectionEmit\EmittedCompiledMethodFactory.cs" />
+    <Compile Include="Helpers\ReflectionEmit\EmitHelpers.cs" />
+    <Compile Include="Helpers\IMemberAccessorFactory.cs" />
+    <Compile Include="Helpers\ReflectionEmit\ReflectionEmitCtorFactory.cs" />
+    <Compile Include="Helpers\ReflectionEmit\ReflectionCtorFactory.cs" />
+    <Compile Include="Helpers\ReflectionEmit\ReflectionMemberAccessorFactory.cs" />
     <Compile Include="Helpers\ValueWithType.cs" />
     <Compile Include="Implementation\CallTarget.cs" />
     <Compile Include="Implementation\ContainerContext.cs" />
@@ -81,7 +94,7 @@
     <Compile Include="Configuration\IProfile.cs" />
     <Compile Include="Configuration\ServiceContractConfigurationBuilder.cs" />
     <Compile Include="Helpers\InternalHelpers.cs" />
-    <Compile Include="Helpers\ReflectionEmit\MemberAccessorsFactory.cs" />
+    <Compile Include="Helpers\MemberAccessors.cs" />
     <Compile Include="Configuration\ContainerConfigurationBuilder.cs" />
     <Compile Include="Implementation\ConfiguratorRunner.cs" />
     <Compile Include="Implementation\ContainerService.cs" />
@@ -89,7 +102,7 @@
     <Compile Include="Implementation\FactoryCreator.cs" />
     <Compile Include="Helpers\EnumerableHelpers.cs" />
     <Compile Include="Helpers\Utils.cs" />
-    <Compile Include="Configuration\FileConfigurationParser.cs" />
+    <Compile Include="FullFramework\FileConfigurationParser.cs" />
     <Compile Include="Implementation\MemberSetter.cs" />
     <Compile Include="Implementation\MemberInjectionsProvider.cs" />
     <Compile Include="Interface\IParametersSource.cs" />
@@ -118,11 +131,7 @@
     <Compile Include="Helpers\AttributesCache.cs" />
     <Compile Include="Helpers\ReflectionEmit\BoxingCaster.cs" />
     <Compile Include="Helpers\ReflectionEmit\Caster.cs" />
-    <Compile Include="Helpers\ReflectionEmit\FieldAccessorFactory.cs" />
-    <Compile Include="Helpers\ReflectionEmit\InvalidMemberInfoException.cs" />
-    <Compile Include="Helpers\ReflectionEmit\MemberAccessorFactory.cs" />
-    <Compile Include="Helpers\ReflectionEmit\PropertyAccessorFactory.cs" />
-    <Compile Include="Helpers\ReflectionEmit\TypeMismatchException.cs" />
+    <Compile Include="Helpers\ReflectionEmit\EmittedMemberAccessorFactory.cs" />
     <Compile Include="Helpers\ReflectionEmit\UnboxingCaster.cs" />
     <Compile Include="Helpers\ReflectionHelpers.cs" />
     <Compile Include="Implementation\ResolutionContext.cs" />

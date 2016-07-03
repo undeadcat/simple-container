@@ -83,13 +83,13 @@ namespace SimpleContainer.Tests.Factories
 				public readonly int a;
 				public readonly IX x;
 
-				public A(int a, IX x)
+				public A(IX x, int a)
 				{
 					this.a = a;
 					this.x = x;
 				}
 
-				public A(int a, X2 x)
+				public A(X2 x, int a)
 				{
 					this.a = a;
 					this.x = x;
@@ -121,6 +121,7 @@ namespace SimpleContainer.Tests.Factories
 				Assert.That(a.a, Is.EqualTo(42));
 			}
 		}
+
 
 		public class SingleParameter : CtorDelegatesTest
 		{
@@ -178,6 +179,41 @@ namespace SimpleContainer.Tests.Factories
 				Assert.That(instance.p2, Is.EqualTo(3));
 				Assert.That(instance.p3, Is.EqualTo(4));
 				Assert.That(instance.p4, Is.EqualTo(5));
+			}
+		}
+
+		public class CanUseDelegateWithReorderedParameters : CtorDelegatesTest
+		{
+			public class Service
+			{
+				
+			}
+
+			public class A
+			{
+				public readonly int arg1;
+				public readonly double arg0;
+				public readonly Service service;
+
+				public A(int arg1, double arg0, Service service)
+				{
+					this.arg1 = arg1;
+					this.arg0 = arg0;
+					this.service = service;
+				}
+
+				public delegate A Ctor(double arg0, int arg1);
+			}
+
+			[Test]
+			public void Test()
+			{
+				var container = Container();
+				var factory = container.Get<A.Ctor>();
+				var instance = factory(0, 1);
+				Assert.That(instance.arg0, Is.EqualTo(0));
+				Assert.That(instance.arg1, Is.EqualTo(1));
+				Assert.That(instance.service, Is.SameAs(container.Get<Service>()));
 			}
 		}
 
@@ -397,6 +433,39 @@ namespace SimpleContainer.Tests.Factories
 				Assert.That(instance.a, Is.EqualTo(42));
 				Assert.That(instance.name1.Type, Is.EqualTo(typeof (A)));
 				Assert.That(instance.name2.Type, Is.EqualTo(typeof (A)));
+			}
+		}
+
+		public class CanInjectSameServiceMultipleTimes : CtorDelegatesTest
+		{
+			public class Service
+			{
+				
+			}
+
+			public class A
+			{
+				public readonly Service service1;
+				public readonly long a;
+				public readonly Service service2;
+
+				public A(Service service1, int a, Service service2)
+				{
+					this.service1 = service1;
+					this.a = a;
+					this.service2 = service2;
+				}
+
+				public delegate A Ctor(int a);
+			}
+
+			[Test]
+			public void Test()
+			{
+				var container = Container();
+				var instance = container.Get<A.Ctor>()(42);
+				Assert.That(instance.service1, Is.SameAs(instance.service2));
+				Assert.That(instance.service1, Is.SameAs(container.Get<Service>()));
 			}
 		}
 

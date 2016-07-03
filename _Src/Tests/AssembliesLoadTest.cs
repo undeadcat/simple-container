@@ -9,7 +9,7 @@ using SimpleContainer.Tests.Helpers;
 
 namespace SimpleContainer.Tests
 {
-	public abstract class AssembliesLoadTest : UnitTestBase
+	public abstract class AssembliesLoadTest : SimpleContainerTestBase
 	{
 		protected override void SetUp()
 		{
@@ -33,7 +33,7 @@ namespace SimpleContainer.Tests
 		protected AppDomain appDomain;
 		private static readonly string testDirectory = Path.GetFullPath("testDirectory");
 
-		private void CopyAssemblyToTestDirectory(Assembly assembly)
+		private static void CopyAssemblyToTestDirectory(Assembly assembly)
 		{
 			File.Copy(assembly.Location, Path.Combine(testDirectory, Path.GetFileName(assembly.Location)));
 		}
@@ -44,13 +44,21 @@ namespace SimpleContainer.Tests
 				typeof (FactoryInvoker).FullName);
 		}
 
+		private static ContainerFactory FactoryForTestDir()
+		{
+			return new ContainerFactory()
+				.WithAssembliesFilter(x => x.Name.StartsWith("tmp_"))
+				.WithTypesFromAssemblies(
+					Directory.GetFiles(AppDomain.CurrentDomain.BaseDirectory, "*.dll").Select(Assembly.LoadFile));
+		}
+
 		private class FactoryInvoker : MarshalByRefObject
 		{
-			public string CreateCointainerWithCrash()
+			public string CreateContainerWithCrash()
 			{
 				try
 				{
-					CreateContainer();
+					FactoryForTestDir().Build();
 					return "can't reach here";
 				}
 				catch (Exception e)
@@ -62,14 +70,6 @@ namespace SimpleContainer.Tests
 			public void DoCallBack<T>(T parameter, Action<T> action)
 			{
 				action(parameter);
-			}
-
-			private void CreateContainer()
-			{
-				new ContainerFactory()
-					.WithAssembliesFilter(x => x.Name.StartsWith("tmp_"))
-					.WithTypesFromDefaultBinDirectory(false)
-					.Build();
 			}
 		}
 
@@ -101,15 +101,13 @@ namespace SimpleContainer.Tests
 
 				GetInvoker().DoCallBack(assemblyName, delegate(string s)
 				{
-					var f = new ContainerFactory()
-						.WithAssembliesFilter(x => x.Name.StartsWith("tmp_"))
-						.WithTypesFromDefaultBinDirectory(false);
+					var f = FactoryForTestDir();
 					var type = Type.GetType("A1.ISomeInterface, " + s);
 					Assert.That(type, Is.Not.Null);
 					using (var c = f.Build())
 					{
 						var exception = Assert.Throws<SimpleContainerException>(() => c.Get(type));
-						var assemblies = new[] {"SimpleContainer", s}.OrderBy(x => x).Select(x => "\t" + x).JoinStrings("\r\n");
+						var assemblies = new[] {ContainerAsembly, s}.OrderBy(x => x).Select(x => "\t" + x).JoinStrings("\r\n");
 						const string expectedMessage = "no instances for [ISomeInterface]\r\n\r\n!" +
 						                               "ISomeInterface - has no implementations\r\n" +
 						                               "scanned assemblies\r\n";
@@ -117,6 +115,8 @@ namespace SimpleContainer.Tests
 					}
 				});
 			}
+
+		
 		}
 
 		public class CorrectExceptionHandling : AssembliesLoadTest
@@ -176,7 +176,7 @@ namespace SimpleContainer.Tests
 				CopyAssemblyToTestDirectory(typeof (IContainer).Assembly);
 				CopyAssemblyToTestDirectory(Assembly.GetExecutingAssembly());
 
-				var exceptionText = GetInvoker().CreateCointainerWithCrash();
+				var exceptionText = GetInvoker().CreateContainerWithCrash();
 				Assert.That(exceptionText, Is.StringContaining("A1.ISomeInterface.Do"));
 
 				const string englishText = "Unable to load one or more of the requested types";

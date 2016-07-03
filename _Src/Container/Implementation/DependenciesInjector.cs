@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using SimpleContainer.Helpers;
@@ -11,8 +10,8 @@ namespace SimpleContainer.Implementation
 	{
 		private readonly SimpleContainer container;
 
-		private readonly ConcurrentDictionary<ServiceName, Injection[]> injections =
-			new ConcurrentDictionary<ServiceName, Injection[]>();
+		private readonly IConcurrentCache<ServiceName, Injection[]> injections =
+			Caches.Create<ServiceName, Injection[]>();
 
 		private static readonly MemberInjectionsProvider provider = new MemberInjectionsProvider();
 
@@ -27,13 +26,6 @@ namespace SimpleContainer.Implementation
 			foreach (var dependency in dependencies)
 				dependency.setter(target, dependency.value.Single());
 			return new BuiltUpService(dependencies);
-		}
-
-		public IEnumerable<Type> GetResolvedDependencies(ServiceName name)
-		{
-			return injections.ContainsKey(name)
-				? provider.GetMembers(name.Type).Select(x => x.member.MemberType())
-				: Enumerable.Empty<Type>();
 		}
 
 		public IEnumerable<Type> GetDependencies(Type type)

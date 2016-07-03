@@ -1,17 +1,15 @@
 using System;
-using System.Collections.Concurrent;
 using System.Linq;
 using System.Reflection;
 using SimpleContainer.Helpers;
-using SimpleContainer.Helpers.ReflectionEmit;
 using SimpleContainer.Infection;
 
 namespace SimpleContainer.Implementation
 {
 	internal class MemberInjectionsProvider
 	{
-		private readonly ConcurrentDictionary<Type, MemberSetter[]> injections =
-			new ConcurrentDictionary<Type, MemberSetter[]>();
+		private readonly IConcurrentCache<Type, MemberSetter[]> injections =
+			Caches.Create<Type, MemberSetter[]>();
 
 		private const BindingFlags bindingFlags =
 			BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
@@ -39,7 +37,7 @@ namespace SimpleContainer.Implementation
 			MemberSetter[] baseSetters = null;
 			if (!type.IsDefined<FrameworkBoundaryAttribute>(false))
 			{
-				var baseType = type.BaseType;
+				var baseType = type.GetTypeInfo().BaseType;
 				if (baseType != typeof (object))
 					baseSetters = GetMembers(baseType);
 			}
@@ -54,7 +52,7 @@ namespace SimpleContainer.Implementation
 				var member = selfMembers[i];
 				var resultIndex = i + baseMembersCount;
 				result[resultIndex].member = member;
-				result[resultIndex].setter = MemberAccessorsFactory.GetSetter(member);
+				result[resultIndex].setter = MemberAccessors.GetSetter(member);
 			}
 			return result;
 		}

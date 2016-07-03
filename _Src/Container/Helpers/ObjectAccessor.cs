@@ -1,20 +1,18 @@
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
-using SimpleContainer.Helpers.ReflectionEmit;
 
 namespace SimpleContainer.Helpers
 {
 	internal static class ObjectAccessor
 	{
-		private static readonly ConcurrentDictionary<Type, Dictionary<string, Property>> typeAccessors =
-			new ConcurrentDictionary<Type, Dictionary<string, Property>>();
+		private static readonly IConcurrentCache<Type, Dictionary<string, Property>> typeAccessors =
+			Caches.Create<Type, Dictionary<string, Property>>();
 
 		private static readonly Func<Type, Dictionary<string, Property>> createTypeAccessor = t => t.GetProperties()
 			.ToDictionary(x => x.Name, x => new Property
 			{
-				getter = MemberAccessorsFactory.GetGetter(x),
+				getter = MemberAccessors.GetGetter(x),
 				type = x.PropertyType
 			});
 

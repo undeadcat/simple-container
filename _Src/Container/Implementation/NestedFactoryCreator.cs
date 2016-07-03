@@ -10,7 +10,7 @@ namespace SimpleContainer.Implementation
 			var factoryType = builder.Type.GetNestedType("Factory");
 			if (factoryType == null)
 				return false;
-			var method = factoryType.GetMethod("Create", Type.EmptyTypes);
+			var method = factoryType.GetMethod("Create");
 			if (method == null)
 				return false;
 			var factory = builder.Context.Container.Resolve(method.DeclaringType, InternalHelpers.emptyStrings, false);

@@ -8,7 +8,7 @@ using SimpleContainer.Helpers;
 namespace SimpleContainer.Tests
 {
 	[TestFixture]
-	public class EnforeWindowsLineEndings
+	public class EnforceWindowsLineEndings
 	{
 		[Test]
 		public void Test()
