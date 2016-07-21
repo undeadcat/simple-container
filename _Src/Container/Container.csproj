@@ -11,43 +11,49 @@
     <AssemblyName>SimpleContainer</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <ErrorReport>prompt</ErrorReport>
+    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|FullFramework' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <OutputPath>..\..\bin\Debug\</OutputPath>
     <DefineConstants>TRACE;DEBUG;FULLFRAMEWORK</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|FullFramework' ">
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>..\..\bin\Release\</OutputPath>
     <DefineConstants>TRACE;FULLFRAMEWORK</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-  <ItemGroup>
-    <Reference Include="System" />
-    <Reference Include="System.Core" />
-    <Reference Include="System.Xml.Linq" />
-    <Reference Include="System.Data.DataSetExtensions" />
-    <Reference Include="Microsoft.CSharp" />
-    <Reference Include="System.Data" />
-    <Reference Include="System.Xml" />
-  </ItemGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|Portable' ">
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <Optimize>false</Optimize>
+    <OutputPath>..\..\bin\Portable\Debug\</OutputPath>
+    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
+    <DefineConstants>TRACE;DEBUG</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|Portable' ">
+    <DebugType>pdbonly</DebugType>
+    <Optimize>true</Optimize>
+    <OutputPath>..\..\bin\Portable\Release\</OutputPath>
+    <TargetFrameworkProfile>Profile259</TargetFrameworkProfile>
+    <DefineConstants>TRACE</DefineConstants>
+  </PropertyGroup>
   <ItemGroup>
     <Compile Include="Configuration\AbstractConfigurationBuilder.cs" />
     <Compile Include="Configuration\DependencyKey.cs" />
     <Compile Include="Configuration\DynamicConfiguration.cs" />
+    <Compile Include="Configuration\FileConfigurationParser.cs">
+      <SubType>Code</SubType>
+    </Compile>
     <Compile Include="Configuration\ImplementationSelector.cs" />
     <Compile Include="Configuration\ImplementationSelectorDecision.cs" />
     <Compile Include="Configuration\ServiceConfigurationSet.cs" />
     <Compile Include="Configuration\ConfigurationRegistry.cs" />
     <Compile Include="Configuration\ServiceConfiguration.cs" />
-    <Compile Include="FullFramework\ContainerFactoryExtensions.cs" />
     <Compile Include="Helpers\Caches.cs" />
     <Compile Include="Helpers\CompiledMethods.cs" />
     <Compile Include="Helpers\ConcurrentDictionaryCache.cs" />
@@ -102,7 +108,6 @@
     <Compile Include="Implementation\FactoryCreator.cs" />
     <Compile Include="Helpers\EnumerableHelpers.cs" />
     <Compile Include="Helpers\Utils.cs" />
-    <Compile Include="FullFramework\FileConfigurationParser.cs" />
     <Compile Include="Implementation\MemberSetter.cs" />
     <Compile Include="Implementation\MemberInjectionsProvider.cs" />
     <Compile Include="Interface\IParametersSource.cs" />
@@ -126,6 +131,10 @@
     <Compile Include="Helpers\ObjectAccessor.cs" />
     <Compile Include="Interface\LogError.cs" />
     <Compile Include="Interface\LogInfo.cs" />
+    <Compile Include="PortableHacks\BindingFlags.cs" />
+    <Compile Include="PortableHacks\NonConcurrentDictionary.cs" />
+    <Compile Include="PortableHacks\SystemExtensions.cs" />
+    <Compile Include="PortableHacks\SystemReflectionExtensions.cs" />
     <Compile Include="Properties\Annotations.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Helpers\AttributesCache.cs" />
@@ -143,7 +152,12 @@
     <Compile Include="Interface\ServiceName.cs" />
     <Compile Include="Interface\ResolvedService.cs" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <ItemGroup Condition=" '$(Platform)' == 'FullFramework'">
+    <Reference Include="System" />
+  </ItemGroup>
+  <!--  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />-->
+  <Import Condition=" '$(Platform)' == 'Portable'" Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
+  <Import Condition=" '$(Platform)' == 'FullFramework'" Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">

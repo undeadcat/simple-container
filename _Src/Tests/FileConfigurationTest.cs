@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FULLFRAMEWORK
+using System;
 using System.Globalization;
 using System.IO;
 using NUnit.Framework;
@@ -370,3 +371,4 @@ namespace SimpleContainer.Tests
 		}
 	}
 }
+#endif

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace SimpleContainer.Helpers.ReflectionEmit
+namespace SimpleContainer.Helpers
 {
 	internal interface IMemberAccessorFactory<TOutput>
 	{

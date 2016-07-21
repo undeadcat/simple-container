@@ -1,3 +1,4 @@
+#if FULLFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -128,3 +129,4 @@ namespace SimpleContainer.Configuration
 		}
 	}
 }
+#endif

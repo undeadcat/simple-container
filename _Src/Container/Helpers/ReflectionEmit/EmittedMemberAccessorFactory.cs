@@ -1,4 +1,5 @@
-﻿using System;
+﻿#if FULLFRAMEWORK
+using System;
 using System.Reflection;
 using System.Reflection.Emit;
 
@@ -116,3 +117,4 @@ namespace SimpleContainer.Helpers.ReflectionEmit
 		}
 	}
 }
+#endif

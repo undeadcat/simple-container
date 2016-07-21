@@ -1,3 +1,4 @@
+#if FULLFRAMEWORK
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -25,3 +26,4 @@ namespace SimpleContainer.Helpers
 		public IEnumerable<TValue> Values { get { return dictionary.Values; }}
 	}
 }
+#endif

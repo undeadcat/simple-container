@@ -1,3 +1,4 @@
+#if FULLFRAMEWORK
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -48,3 +49,4 @@ namespace SimpleContainer.Helpers.ReflectionEmit
 		}
 	}
 }
+#endif

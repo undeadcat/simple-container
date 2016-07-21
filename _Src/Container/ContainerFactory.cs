@@ -18,7 +18,7 @@ namespace SimpleContainer
 		private LogError errorLogger;
 		private LogInfo infoLogger;
 		private Type[] priorities;
-		private Func<Type[], Action<ContainerConfigurationBuilder>> fileConfigure;
+		private Func<Type[], Action<ContainerConfigurationBuilder>> fileConfigure = _ => (__ => { });
 		private Action<ContainerConfigurationBuilder> configure;
 		private Action<ContainerConfigurationBuilder> staticConfigure;
 		private TypesContext typesContextCache;
@@ -71,14 +71,6 @@ namespace SimpleContainer
 		public ContainerFactory WithPriorities(params Type[] newConfiguratorTypes)
 		{
 			priorities = newConfiguratorTypes;
-			configurationByProfileCache.Clear();
-			return this;
-		}
-
-		internal ContainerFactory WithFileConfiguration(Func<Type[], Action<ContainerConfigurationBuilder>> fileConfig)
-		{
-			fileConfigure = fileConfig;
-			typesContextCache = null;
 			configurationByProfileCache.Clear();
 			return this;
 		}
@@ -154,6 +146,52 @@ namespace SimpleContainer
 			configurationByProfileCache.Clear();
 			return this;
 		}
+
+#if FULLFRAMEWORK
+		public ContainerFactory WithTypesFromDefaultBinDirectory(bool withExecutables)
+		{
+			return WithTypesFromDirectory(GetBinDirectory(), withExecutables);
+		}
+
+		public ContainerFactory WithTypesFromDirectory(string directory, bool withExecutables)
+		{
+			var assemblies = System.IO.Directory.GetFiles(directory, "*.dll")
+				.Union(withExecutables ? System.IO.Directory.GetFiles(directory, "*.exe") : Enumerable.Empty<string>())
+				.Select(delegate (string s)
+				{
+					try
+					{
+						return AssemblyName.GetAssemblyName(s);
+					}
+					catch (BadImageFormatException)
+					{
+						return null;
+					}
+				})
+				.NotNull()
+				.AsParallel()
+				.Select(AssemblyHelpers.LoadAssembly);
+			return WithTypesFromAssemblies(assemblies);
+		}
+
+		private static string GetBinDirectory()
+		{
+			var relativePath = AppDomain.CurrentDomain.RelativeSearchPath;
+			var basePath = AppDomain.CurrentDomain.BaseDirectory;
+			return string.IsNullOrEmpty(relativePath) || !relativePath.IsSubdirectoryOf(basePath)
+				? basePath
+				: relativePath;
+		}
+
+		public ContainerFactory WithConfigFile(string fileName)
+		{
+			if (string.IsNullOrEmpty(fileName) || !System.IO.File.Exists(fileName)) return this;
+			fileConfigure = typesList => FileConfigurationParser.Parse(typesList, fileName);
+			typesContextCache = null;
+			configurationByProfileCache.Clear();
+			return this;
+		}
+#endif
 
 		public IContainer Build()
 		{

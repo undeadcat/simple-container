@@ -1,5 +1,7 @@
-﻿using System;
+﻿#if !FULLFRAMEWORK
+using System;
 
+// ReSharper disable once CheckNamespace
 namespace SimpleContainer.Helpers
 {
 	[Flags]
@@ -14,3 +16,4 @@ namespace SimpleContainer.Helpers
 		FlattenHierarchy = 64
 	}
 }
+#endif
