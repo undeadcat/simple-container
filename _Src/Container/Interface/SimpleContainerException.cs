@@ -3,6 +3,9 @@ using System.Runtime.Serialization;
 
 namespace SimpleContainer.Interface
 {
+#if FULLFRAMEWORK
+	[Serializable]
+#endif
 	public class SimpleContainerException : Exception
 	{
 		public SimpleContainerException(string message)
@@ -14,5 +17,10 @@ namespace SimpleContainer.Interface
 		{
 		}
 
+#if FULLFRAMEWORK
+	protected SimpleContainerException(SerializationInfo info, StreamingContext context) : base(info, context)
+		{
+		}
+#endif
 	}
 }
