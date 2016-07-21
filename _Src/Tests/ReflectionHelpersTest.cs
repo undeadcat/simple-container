@@ -28,7 +28,7 @@ namespace SimpleContainer.Tests
 
 			public class DeclaringWithGenericNested<TSame>
 			{
-				public class GenericNested<TSame>
+				public class GenericNested<TOther>
 				{
 				}
 			}
@@ -46,7 +46,7 @@ namespace SimpleContainer.Tests
 				Assert.That(typeof (DeclaringWithGenericNested<string>.GenericNested<int>).FormatName(),
 					Is.EqualTo("DeclaringWithGenericNested<string>.GenericNested<int>"));
 				Assert.That(typeof (DeclaringWithGenericNested<>.GenericNested<>).FormatName(),
-					Is.EqualTo("DeclaringWithGenericNested<TSame>.GenericNested<TSame>"));
+					Is.EqualTo("DeclaringWithGenericNested<TSame>.GenericNested<TOther>"));
 			}
 		}
 	}

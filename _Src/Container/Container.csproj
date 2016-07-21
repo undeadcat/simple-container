@@ -46,9 +46,7 @@
     <Compile Include="Configuration\AbstractConfigurationBuilder.cs" />
     <Compile Include="Configuration\DependencyKey.cs" />
     <Compile Include="Configuration\DynamicConfiguration.cs" />
-    <Compile Include="Configuration\FileConfigurationParser.cs">
-      <SubType>Code</SubType>
-    </Compile>
+    <Compile Include="Configuration\FileConfigurationParser.cs"/>
     <Compile Include="Configuration\ImplementationSelector.cs" />
     <Compile Include="Configuration\ImplementationSelectorDecision.cs" />
     <Compile Include="Configuration\ServiceConfigurationSet.cs" />
@@ -155,7 +153,6 @@
   <ItemGroup Condition=" '$(Platform)' == 'FullFramework'">
     <Reference Include="System" />
   </ItemGroup>
-  <!--  <Import Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />-->
   <Import Condition=" '$(Platform)' == 'Portable'" Project="$(MSBuildExtensionsPath32)\Microsoft\Portable\$(TargetFrameworkVersion)\Microsoft.Portable.CSharp.targets" />
   <Import Condition=" '$(Platform)' == 'FullFramework'" Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

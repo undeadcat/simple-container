@@ -72,7 +72,7 @@ namespace SimpleContainer.Tests.LongRunning
 			Parallel.For(0, 1000000, new ParallelOptions {MaxDegreeOfParallelism = Environment.ProcessorCount},
 				_ => invoker.Create(typeof (A)));
 			stopwatch.Stop();
-			Assert.That(stopwatch.Elapsed, Is.LessThan(TimeSpan.FromMilliseconds(700)));
+			Assert.That(stopwatch.Elapsed, Is.LessThan(GetTimeout()));
 		}
 
 		[Test]
@@ -84,7 +84,16 @@ namespace SimpleContainer.Tests.LongRunning
 			Parallel.For(0, 1000000, new ParallelOptions {MaxDegreeOfParallelism = Environment.ProcessorCount},
 				_ => factory());
 			stopwatch.Stop();
-			Assert.That(stopwatch.Elapsed, Is.LessThan(TimeSpan.FromMilliseconds(700)));
+			Assert.That(stopwatch.Elapsed, Is.LessThan(GetTimeout()));
+		}
+
+		private static TimeSpan GetTimeout()
+		{
+#if FULLFRAMEWORK
+			return TimeSpan.FromSeconds(1);
+#else 
+			return TimeSpan.FromSeconds(2);
+#endif
 		}
 	}
 }
